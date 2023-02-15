@@ -8,6 +8,41 @@ async function getMarketData() {
       headers: {accept: 'application/json'}
     };
 
+    const { data } = await axios.request(options);
+    
+    data.marketAll = data[0].market;
+    for(i = 1; i < data.length; i++) {
+      data.marketAll += ', ' + data[i].market;
+    }
+
+    return data;
+
+  } catch(err) {
+    console.error(err);
+  }
+
+}
+
+async function getCandleData(market, to, count) {
+  let url;
+  if (count == null) {
+    count = 1;
+  }
+
+  if (to == 'recent') {
+    url = `https://api.upbit.com/v1/candles/minutes/1?market=${ market }&count=${ count }`
+  } else {
+    url = `https://api.upbit.com/v1/candles/minutes/1?market=${ market }&to=${ to }&count=${ count }`
+  }
+
+  try {
+
+    const options = {
+      method: 'GET',
+      url: url,
+      headers: {accept: 'application/json'}
+    };
+
     const response = await axios.request(options);
     return response.data;
 
@@ -17,72 +52,102 @@ async function getMarketData() {
 
 }
 
+
+async function getTickerData(markets) {
+   try {
+    const options = {
+      method: 'GET',
+      url: `https://api.upbit.com/v1/ticker?markets=${ markets }`,
+      headers: {accept: 'application/json'},
+    };
+
+    const response = await axios.request(options);
+    return response.data;
+
+  } catch(err) {
+    console.error(err);
+  }
+
+}
+
+function timeConvert(date) {
+  date.setHours(date.getHours());
+  //const date = new Date(+ new Date + 3240 * 10000);
+
+  //toISOString() 
+  //"YYYY-MM-DDTHH:mm:ss.sssZ" 형식으로 시간 정보를 반환하나,
+  //UTC 기준으로 출력되므로 +9H 해준다
+  return date.toISOString().split(':')[0] + ':' + date.toISOString().split(':')[1] + ':00Z';
+
+}
+
+
 async function main() {
-  const a = await getMarketData();
+
+  /**  -object List-
+  market	업비트에서 제공중인 시장 정보	String
+  allMarketName
+  korean_name	거래 대상 암호화폐 한글명	String
+  english_name	거래 대상 암호화폐 영문명	String
+  market_warning	유의 종목 여부
+  */
+  const marketData = await getMarketData();
+  let marketTicker = await getTickerData(marketData.marketAll);
+
+  for (i = 0; i < 3; i++) {
+    const count = 2;
+
+    const date = new Date();
+
+    date.setMinutes(date.getMinutes() - (count * i));
+
+    const to = timeConvert(date);
+    //console.log(to);
+
+    const candle = await getCandleData(marketData[0].market, to, count);
+    for(j = 0; j < count; j++) {
+      console.log(candle[j].candle_date_time_kst);
+      console.log(candle[j].trade_price);
+      console.log(candle[j].candle_acc_trade_volume);
+    }
+  }
+
+
+/*
+  let date = new Date(2019, 0, 1);
+  document.write('기준일자 : ' + date + '<br>');
   
-  console.log(a);
+  date.setMinutes(date.getMinutes() + 100);
+  document.write('100분 후 : ' + date + '<br>');
+  
+  date = new Date(2019, 0, 1);
+  date.setMinutes(date.getMinutes() - 100);
+  document.write('100분 전 : ' + date + '<br>');
+*/
+  //let marketCandle = await getCandleData(marketData[0].market);
+  //let marketTicker = await getTickerData(marketData[0].market);
+  //console.log(marketTicker);
+
+  //console.log(marketData.length);
+  //console.log(marketData.allMarketName);
+
+  //let allMarketName;
+  /*
+  for(i = 0; i < marketData.length; i++) {
+    allMarketName = allMarketName . marketData[i].market;
+  }
+
+  */
+  //console.log(allMarketName);
+/*
+  for(let i = 0; i < 50; i++) {
+    marketTicker = await getTickerData(marketData[0].market);
+    console.log(marketTicker);
+  }
+  */
 }
 
 main();
-
-
-//let test = await getMarketData();
-  //console.log(test);
-
-/*
-  await axios.request(options).then((res) => {
-    //console.log(res.data);marketData
-    marketData = res.data;
-    console.log(marketData);
-    numCoins = res.data.length;
-    //console.log(numCoins);
-  })
-  .catch(function (error) {
-    console.error(error);
-  });
-  console.log(marketData);
-*/
-
-
-
-/*
-
-for(let i = 0; i < numCoins; i++) {
-  const option = {
-    method: 'GET',
-    url: `https://api.upbit.com/v1/candles/minutes/1?market=${res.data[i].market}&count=1`,
-    headers: {accept: 'application/json'}
-  };
-
-  axios
-  .request(options2)
-  .then(function (res) {
-    console.log(res.data);
-  })
-  .catch(function (error) {
-    console.error(error);
-  });
-
-}
-*/
-/*
-const options2 = {
-  method: 'GET',
-  url: 'https://api.upbit.com/v1/candles/minutes/1?market=KRW-BTC&count=1',
-  headers: {accept: 'application/json'}
-};
-
-axios
-  .request(options2)
-  .then(function (res) {
-    console.log(res.data);
-  })
-  .catch(function (error) {
-    console.error(error);
-  });
-
-
-*/
 
 
 /*
@@ -150,6 +215,5 @@ export default {
   },
 };
 </script>
-
 
 */
