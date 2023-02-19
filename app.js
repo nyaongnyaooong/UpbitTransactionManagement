@@ -1,5 +1,12 @@
 const axios = require('axios');
+const express = require('express');
+const bodyParser = require('body-parser');
 
+const app = express();
+app.use(bodyParser.urlencoded({ extended : true }));
+
+
+//functions
 async function getMarketData() {
   try {
     const options = {
@@ -52,7 +59,6 @@ async function getCandleData(market, to, count) {
 
 }
 
-
 async function getTickerData(markets) {
    try {
     const options = {
@@ -81,6 +87,37 @@ function timeConvert(date) {
 
 }
 
+function sleep(time){
+  return new Promise(resolve => setTimeout(resolve, time));
+}
+
+
+
+
+
+
+
+//- - - - - - - - - - - - - - - - - - - - -
+//  routers
+//- - - - - - - - - - - - - - - - - - - - -
+app.get('/', async (req, res) => {
+  const marketData = await getMarketData();
+  //console.log(marketData.marketAll);
+
+  let marketArray = [];
+
+  for(i = 0; i < marketData.length; i++) {
+    marketArray.push(marketData[i].market);
+  }
+
+  res.send(marketArray);
+
+});
+
+
+app.listen(8080, () => {
+  console.log('8080 open');
+});
 
 async function main() {
 
@@ -93,24 +130,34 @@ async function main() {
   */
   const marketData = await getMarketData();
   let marketTicker = await getTickerData(marketData.marketAll);
+  let candle = new Array();
 
-  for (i = 0; i < 3; i++) {
-    const count = 2;
+  for (i = 0; i < 10000; i++) {
+    const count = 200;
 
     const date = new Date();
-
     date.setMinutes(date.getMinutes() - (count * i));
-
     const to = timeConvert(date);
-    //console.log(to);
 
-    const candle = await getCandleData(marketData[0].market, to, count);
+    const tempCandle = await getCandleData(marketData[0].market, to, count);
+    candle = candle.concat(tempCandle);
+
+    await sleep(100);
+
+
+    console.log(candle.length);
+
+    /*
+    //debugging
     for(j = 0; j < count; j++) {
       console.log(candle[j].candle_date_time_kst);
       console.log(candle[j].trade_price);
       console.log(candle[j].candle_acc_trade_volume);
     }
+    */
   }
+
+  console.log(candle.length);
 
 
 /*
@@ -147,7 +194,6 @@ async function main() {
   */
 }
 
-main();
 
 
 /*
