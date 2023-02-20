@@ -6,6 +6,25 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended : true }));
 
 
+
+// URL 같은건 왠만하면 상수로 빼서 관리하는게 좋을듯
+const URL = {
+  MARKET: "https://api.upbit.com/v1/market/all?isDetails=false"
+};
+
+const getMarketDataByMadforre = async () => { // 내 방식대로 해봤음
+  try {
+    const { data } = await axios.request({ method: 'GET', url: URL.MARKET });
+    let marketAll = [];
+    data.map((obj) => {
+      marketAll.push(obj.market);
+    });
+    return marketAll;
+  } catch(err) {
+    console.log(err);
+  }
+};
+
 //functions
 async function getMarketData() {
   try {
@@ -100,18 +119,22 @@ function sleep(time){
 //- - - - - - - - - - - - - - - - - - - - -
 //  routers
 //- - - - - - - - - - - - - - - - - - - - -
-app.get('/', async (req, res) => {
-  const marketData = await getMarketData();
-  //console.log(marketData.marketAll);
+// app.get('/', async (req, res) => {
+//   const marketData = await getMarketData();
+//   //console.log(marketData.marketAll);
 
-  let marketArray = [];
+//   let marketArray = [];
 
-  for(i = 0; i < marketData.length; i++) {
-    marketArray.push(marketData[i].market);
-  }
+//   for(i = 0; i < marketData.length; i++) {
+//     marketArray.push(marketData[i].market);
+//   }
 
-  res.send(marketArray);
+//   res.send(marketArray);
 
+// });
+
+app.get('/', async (req, res) => { // 줄여보았음
+  res.send(marketData = await getMarketDataByMadforre());
 });
 
 
